@@ -56,3 +56,7 @@ class Mesh:
         fig.tight_layout()
 
         plt.show()
+
+    def vertices_complement(self, vertices):
+        return [v for v in self.vertices if v not in vertices]
+
