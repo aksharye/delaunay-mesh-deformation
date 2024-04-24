@@ -76,7 +76,9 @@ class DTRBF1_Mesh_Deform:
     
     @staticmethod
     def rbf(v):
-        v  = v / 10.0
+        v = v / 20.0
+        if (v > 1):
+            return 0
         return (1 - v) * (1 - v)
 
 

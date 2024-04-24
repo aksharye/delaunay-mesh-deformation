@@ -28,14 +28,15 @@ class Mesh:
         
         vertices = np.array(vertices)
         faces = np.array(self.faces)
+        qualities = np.array(self.mesh_quality())
 
         C = np.array(range(0,100))
 
         fig = plt.figure()
 
         ax = fig.add_subplot(projection="3d")
-        norm = plt.Normalize(C.min(), C.max())
-        colors = plt.cm.viridis(norm(C))
+        colors = plt.cm.jet(qualities)
+        fig.colorbar(plt.cm.ScalarMappable(cmap = 'jet'), ax = ax)
 
         pc = art3d.Poly3DCollection(vertices[faces], facecolors=colors, edgecolor="black")
         ax.add_collection(pc)
@@ -59,4 +60,39 @@ class Mesh:
 
     def vertices_complement(self, vertices):
         return [v for v in self.vertices if v not in vertices]
+    
+    def face_quality(self, face):
+        F = [self.vertices[f] for f in face]
+        
+        alphas = []
+        sum = 0
+        for k in range(4):
+            Ak = []
+            Ak.append([F[(k+1) % 4][0] - F[k % 4][0], F[(k+3) % 4][0] - F[k % 4][0]])
+            Ak.append([F[(k+1) % 4][1] - F[k % 4][1], F[(k+3) % 4][1] - F[k % 4][1]])
+            Ak = np.array(Ak)
+            alpha_k = np.linalg.det(Ak)
+            if (alpha_k < 0):
+                return 0
+            alphas.append(alpha_k)
+            
+            tensor_k = np.dot(Ak.T, Ak)
+            sum += (np.sqrt(tensor_k[0][0] * tensor_k[1][1]))/alpha_k
+            
+            
+            
+        tau = (alphas[0] + alphas[2])/ 2.0
+        size_metric = min(tau, 1.0 / tau)
+        skew_metric = 4.0 / sum
+        
+        return np.sqrt(size_metric) * skew_metric
+
+    def mesh_quality(self):
+        self.qualities = []
+        for f in self.faces:
+            self.qualities.append(self.face_quality(f))
+            
+        return self.qualities
+        
+        
 
