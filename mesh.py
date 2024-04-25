@@ -36,7 +36,7 @@ class Mesh:
 
         ax = fig.add_subplot(projection="3d")
         colors = plt.cm.jet(qualities)
-        fig.colorbar(plt.cm.ScalarMappable(cmap = 'jet'), ax = ax)
+        fig.colorbar(plt.cm.ScalarMappable(cmap = 'jet'), ax = ax, shrink=0.8)
 
         pc = art3d.Poly3DCollection(vertices[faces], facecolors=colors, edgecolor="black")
         ax.add_collection(pc)

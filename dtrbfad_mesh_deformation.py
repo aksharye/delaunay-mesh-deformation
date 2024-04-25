@@ -4,9 +4,8 @@ from scipy.spatial import Delaunay
 import matplotlib.pyplot as plt
 
 # Currently only 2D support
-# RBF1 Method
 
-class DTRBF1_Mesh_Deform:
+class DTRBFAD_Mesh_Deform:
     @staticmethod
     def visualize_delaunay(vertices):
         vertices = np.array(vertices)
@@ -23,16 +22,29 @@ class DTRBF1_Mesh_Deform:
         v_tris = tri.find_simplex(mesh.vertices)
 
         new_vertices = []
-        
         for i in range(len(mesh.vertices)):
-            
-            
             x = mesh.vertices[i][0]
             y = mesh.vertices[i][1]
             
             triangle = simplices[v_tris[i]]
             triangle = [(exterior[triangle[0]][0], exterior[triangle[0]][1]), (exterior[triangle[1]][0], exterior[triangle[1]][1]), (exterior[triangle[2]][0], exterior[triangle[2]][1])]
+
+
+            A = DTRBFAD_Mesh_Deform.triangle_area(triangle[0], triangle[1], triangle[2])
+
+            e1 = DTRBFAD_Mesh_Deform.triangle_area(triangle[0], triangle[1], (x,y)) / A
+            e2 = DTRBFAD_Mesh_Deform.triangle_area(triangle[1], triangle[2], (x,y)) / A
+            e3 = DTRBFAD_Mesh_Deform.triangle_area(triangle[0], triangle[2], (x,y)) / A
             
+            triangle_weights = []
+            for i in range(3):
+                if (triangle[i][0] == exterior_mapping[triangle[i]][0] and triangle[i][1] == exterior_mapping[triangle[i]][1]):
+                    triangle_weights.append(0.5);
+                else:
+                    triangle_weights.append(0);
+                    
+            triangle = [exterior_mapping[t] for t in triangle]
+
             dx = []
             dy = []
             for j in range(3):
@@ -46,7 +58,7 @@ class DTRBF1_Mesh_Deform:
             for j in range(3):
                 row = []
                 for k in range(3):
-                    row.append(DTRBF1_Mesh_Deform.rbf(np.linalg.norm(np.array(triangle[j]) - np.array(triangle[k]))))
+                    row.append(DTRBFAD_Mesh_Deform.rbf(np.linalg.norm(np.array(triangle[j]) - np.array(triangle[k]))))
                 M.append(row)
 
             M = np.array(M)
@@ -61,11 +73,17 @@ class DTRBF1_Mesh_Deform:
 
             A = []
             for j in range(3):
-                A.append(DTRBF1_Mesh_Deform.rbf(np.linalg.norm(np.array((x,y)) - np.array(triangle[j]))))
+                A.append(DTRBFAD_Mesh_Deform.rbf(np.linalg.norm(np.array((x,y)) - np.array(triangle[j]))))
             A = np.array(A)
             
-            tx = x + np.dot(A, alpha_x)
-            ty = y + np.dot(A, alpha_y)
+            dx = np.dot(A, alpha_x)
+            dy = np.dot(A, alpha_y)
+
+            r = e1 * triangle_weights[2] + e2 * triangle_weights[0] + e3 * triangle_weights[1]
+            damp = DTRBFAD_Mesh_Deform.damp(r)
+            
+            tx = x + damp * dx
+            ty = y + damp * dy
 
             new_vertices.append((tx,ty))
 
@@ -73,6 +91,11 @@ class DTRBF1_Mesh_Deform:
     
     @staticmethod
     def deform_rotation(mesh, exterior, rotation_mapping):
+        tri = Delaunay(exterior)
+        simplices = tri.simplices
+
+        v_tris = tri.find_simplex(mesh.vertices)
+
         exterior_mapping = {}
 
         for p in rotation_mapping:
@@ -83,21 +106,28 @@ class DTRBF1_Mesh_Deform:
             ])
             exterior_mapping[p] = tuple(np.dot(rotate, p))
             
-        tri = Delaunay(exterior)
-        simplices = tri.simplices
-
-        v_tris = tri.find_simplex(mesh.vertices)
-
         new_vertices = []
-        
         for i in range(len(mesh.vertices)):
             x = mesh.vertices[i][0]
             y = mesh.vertices[i][1]
-
-
+            
             triangle = simplices[v_tris[i]]
             triangle = [(exterior[triangle[0]][0], exterior[triangle[0]][1]), (exterior[triangle[1]][0], exterior[triangle[1]][1]), (exterior[triangle[2]][0], exterior[triangle[2]][1])]
+
+
+            A = DTRBFAD_Mesh_Deform.triangle_area(triangle[0], triangle[1], triangle[2])
+
+            e1 = DTRBFAD_Mesh_Deform.triangle_area(triangle[0], triangle[1], (x,y)) / A
+            e2 = DTRBFAD_Mesh_Deform.triangle_area(triangle[1], triangle[2], (x,y)) / A
+            e3 = DTRBFAD_Mesh_Deform.triangle_area(triangle[0], triangle[2], (x,y)) / A
             
+            triangle_weights = []
+            for i in range(3):
+                if (triangle[i][0] == exterior_mapping[triangle[i]][0] and triangle[i][1] == exterior_mapping[triangle[i]][1]):
+                    triangle_weights.append(0.5);
+                else:
+                    triangle_weights.append(0);
+        
             rz = []
             for j in range(3):
                 rz.append(rotation_mapping[triangle[j]])
@@ -108,7 +138,7 @@ class DTRBF1_Mesh_Deform:
             for j in range(3):
                 row = []
                 for k in range(3):
-                    row.append(DTRBF1_Mesh_Deform.rbf(np.linalg.norm(np.array(triangle[j]) - np.array(triangle[k]))))
+                    row.append(DTRBFAD_Mesh_Deform.rbf(np.linalg.norm(np.array(triangle[j]) - np.array(triangle[k]))))
                 M.append(row)
 
             M = np.array(M)
@@ -121,14 +151,21 @@ class DTRBF1_Mesh_Deform:
             alpha_z = np.dot(Minv, rz)
             A = []
             for j in range(3):
-                A.append(DTRBF1_Mesh_Deform.rbf(np.linalg.norm(np.array((x,y)) - np.array(triangle[j]))))
+                A.append(DTRBFAD_Mesh_Deform.rbf(np.linalg.norm(np.array((x,y)) - np.array(triangle[j]))))
             A = np.array(A)
- 
-            alpha_z = np.dot(A, alpha_z)
-            
-            tx = x*np.cos(alpha_z) + y*np.sin(alpha_z)
-            ty = y*np.cos(alpha_z) - x*np.sin(alpha_z)
 
+            
+            theta = np.dot(A, alpha_z)
+
+
+            r = e1 * triangle_weights[2] + e2 * triangle_weights[0] + e3 * triangle_weights[1]
+            damp = DTRBFAD_Mesh_Deform.damp(r)
+            theta = damp * theta
+
+
+            tx = x*np.cos(theta) + y*np.sin(theta)
+            ty = y*np.cos(theta) - x*np.sin(theta)
+            
             new_vertices.append((tx,ty))
 
         return Mesh(new_vertices, mesh.faces, mesh.dim)
@@ -139,10 +176,17 @@ class DTRBF1_Mesh_Deform:
         return abs(0.5 * np.linalg.det(mat))
     
     @staticmethod
+    def damp(v):
+        if (v > 1):
+            return 0
+        return (1 - v) * (1 - v) * (1 + v)
+    
+    @staticmethod
     def rbf(v):
         v = v / 10.0
         if (v > 1):
             return 0
         return (1 - v) * (1 - v)
+
 
 
