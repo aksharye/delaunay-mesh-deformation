@@ -21,7 +21,7 @@ class Mesh:
 
         return faces_by_index
 
-    def visualize(self, max_x = 1, max_y = 1, max_z = 1, show_axis=True):
+    def visualize(self, min_x = 0, min_y = 0, min_z = 0, max_x = 1, max_y = 1, max_z = 1, show_axis=True):
         vertices = self.vertices
         if (self.dim == 2):
             vertices = [[v[1], v[0], 0] for v in vertices]
@@ -41,8 +41,8 @@ class Mesh:
         pc = art3d.Poly3DCollection(vertices[faces], facecolors=colors, edgecolor="black")
         ax.add_collection(pc)
 
-        ax.set_xlim3d(0, max_x)
-        ax.set_ylim3d(0, max_y)
+        ax.set_xlim3d(min_x, max_x)
+        ax.set_ylim3d(min_y, max_y)
 
         if (self.dim == 3):
             ax.set_zlim3d(0, max_z)

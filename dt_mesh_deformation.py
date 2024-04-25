@@ -44,6 +44,38 @@ class DT_Mesh_Deform:
             new_vertices.append((tx,ty))
 
         return Mesh(new_vertices, mesh.faces, mesh.dim)
+    
+    @staticmethod
+    def deform_rotation(mesh, exterior, rotation_mapping):
+        tri = Delaunay(exterior)
+        simplices = tri.simplices
+
+        v_tris = tri.find_simplex(mesh.vertices)
+
+            
+        new_vertices = []
+        for i in range(len(mesh.vertices)):
+            x = mesh.vertices[i][0]
+            y = mesh.vertices[i][1]
+
+            triangle = simplices[v_tris[i]]
+            triangle = [(exterior[triangle[0]][0], exterior[triangle[0]][1]), (exterior[triangle[1]][0], exterior[triangle[1]][1]), (exterior[triangle[2]][0], exterior[triangle[2]][1])]
+
+
+            A = DT_Mesh_Deform.triangle_area(triangle[0], triangle[1], triangle[2])
+
+            e1 = DT_Mesh_Deform.triangle_area(triangle[0], triangle[1], (x,y)) / A
+            e2 = DT_Mesh_Deform.triangle_area(triangle[1], triangle[2], (x,y)) / A
+            e3 = DT_Mesh_Deform.triangle_area(triangle[0], triangle[2], (x,y)) / A
+
+
+            theta = e1 * rotation_mapping[triangle[2]] + e2 * rotation_mapping[triangle[0]] + e3 * rotation_mapping[triangle[1]]
+            tx = x*np.cos(theta) + y*np.sin(theta)
+            ty = y*np.cos(theta) - x*np.sin(theta)
+
+            new_vertices.append((tx,ty))
+
+        return Mesh(new_vertices, mesh.faces, mesh.dim)
 
     @staticmethod
     def triangle_area(p1, p2, p3):

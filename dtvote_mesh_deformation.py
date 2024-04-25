@@ -3,6 +3,9 @@ import numpy as np
 from scipy.spatial import Delaunay
 import matplotlib.pyplot as plt
 
+from dt_mesh_deformation import DT_Mesh_Deform
+from dtrbf_mesh_deformation import DTRBF1_Mesh_Deform
+
 # Currently only 2D support
 # RBF1 Method
 
