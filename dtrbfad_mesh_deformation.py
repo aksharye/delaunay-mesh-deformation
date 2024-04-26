@@ -43,13 +43,12 @@ class DTRBFAD_Mesh_Deform:
                 else:
                     triangle_weights.append(0);
                     
-            triangle = [exterior_mapping[t] for t in triangle]
 
             dx = []
             dy = []
             for j in range(3):
-                dx.append(triangle[j][0] - exterior_mapping[triangle[j]][0])
-                dy.append(triangle[j][1] - exterior_mapping[triangle[j]][1])
+                dx.append(exterior_mapping[triangle[j]][0] - triangle[j][0])
+                dy.append(exterior_mapping[triangle[j]][1] - triangle[j][1])
 
             dx = np.array(dx)
             dy = np.array(dy)

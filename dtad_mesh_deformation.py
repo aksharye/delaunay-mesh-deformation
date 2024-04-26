@@ -97,9 +97,9 @@ class DTAD_Mesh_Deform:
             triangle_weights = []
             for i in range(3):
                 if (triangle[i][0] == exterior_mapping[triangle[i]][0] and triangle[i][1] == exterior_mapping[triangle[i]][1]):
-                    triangle_weights.append(0.5);
-                else:
                     triangle_weights.append(0);
+                else:
+                    triangle_weights.append(0.5);
 
                     
             theta = e1 * rotation_mapping[triangle[2]] + e2 * rotation_mapping[triangle[0]] + e3 * rotation_mapping[triangle[1]]            
